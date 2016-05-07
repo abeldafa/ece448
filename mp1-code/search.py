@@ -32,6 +32,7 @@ def search(maze, searchMethod):
         "dfs": dfs,
         "greedy": greedy,
         "astar": astar,
+        "extra": extra,
     }.get(searchMethod)(maze)
 
 
@@ -394,3 +395,131 @@ def astarOneGoalPathAndDistance(maze):
     path.append(start)
     path.reverse()
     return path,totalSteps, fn[goal]
+
+
+def extra(maze):
+    path,states,shortestDistance = extrahelper(maze)
+    return path, states
+
+
+def extrahelper(maze):
+    start = maze.getStart()
+    goal = maze.getObjectives()[0]
+    totalSteps = 0
+    path = []
+    PredictDistToGoal = distDictextra(maze)
+    fn = distDictextra(maze)
+    PointDists = {}
+    Row = maze.getDimensions()[0]
+    Column = maze.getDimensions()[1]
+    for i in range(Row):
+        for j in range(Column):
+            PointDists[(i,j)] = 100000
+    PointDists[start] = 0
+    Open = set()
+    Open.add(start)
+    visited = set()
+    parent = {}
+    while Open:
+        shortestPoint = getKey(Open,fn)
+        totalSteps += 1
+        Open.remove(shortestPoint)
+        if (shortestPoint == goal):
+            break
+        
+        for child in maze.getNeighbors(shortestPoint[0],shortestPoint[1]):
+            if PointDists[shortestPoint]<PointDists[child]-1:
+                PointDists[child] = PointDists[shortestPoint]+1
+            newFn = PredictDistToGoal[child] + PointDists[child]
+
+            if child in Open:
+                if newFn < fn[child]:
+                    parent[child] = shortestPoint
+                    fn[child] = newFn
+            if child in visited:
+                continue
+
+            if (child not in visited) and (child not in Open):
+                parent[child] = shortestPoint
+                Open.add(child)
+                fn[child] = newFn
+        visited.add(shortestPoint)
+    cur = goal
+    while cur != start:
+        path.append(cur)
+        cur = parent[cur]  
+    path.append(start)
+    path.reverse()
+    return path,totalSteps, fn[goal]
+
+
+def distDictextra(maze):
+    Row = maze.getDimensions()[0]
+    Column = maze.getDimensions()[1]
+    PredictDistToGoal = {}
+    goal = maze.getObjectives()[0]
+    for i in range(Row):
+        for j in range(Column):
+            PredictDistToGoal[(i,j)] = CheckDist(goal,(i,j))
+    for i in range(Row):
+        for j in range(Column):
+
+            if i in range(int(Row/2),Row) and j in range(int(Column/2)):
+
+                PredictDistToGoal[(i,j)] = CheckDist((int(Row/2),int(Column/2)),(i,j))
+            if i in range(int(Row/2),Row) and j in range(int(Column/2),Column):
+
+                PredictDistToGoal[(i,j)] = CheckDist((Row,Column),(i,j))
+                
+    return PredictDistToGoal
+
+
+
+# def iddfs(maze):
+#     start = maze.getStart()
+#     goal = maze.getObjectives()[0]
+#     Row = maze.getDimensions()[0]
+#     Column = maze.getDimensions()[1]
+    
+#     getout = 0
+#     for depth in range(getdist(start, goal), getdis(start, goal)):
+#         if(getout == 1):
+#             break
+#         totalSteps = 0    
+#         visited = {}
+#         for i in range(Row):
+#             for j in range(Column):
+#                 visited[(i,j)] = 100000
+#         visited[start] = 0
+#         Stack = []
+#         Stack.append(start)
+#         while len(Stack)!=0:
+#             cur = Stack.pop(-1)
+#             totalSteps +=1
+#             if(totalSteps >= depth):
+#                 continue
+#             for neighbor in maze.getNeighbors(cur[0],cur[1]):
+#                 if visited[cur]<visited[neighbor]-1:
+#                     Stack.append(neighbor)
+#                     visited[neighbor] = visited[cur] + 1 
+                    
+#             if cur == goal:
+#                 getout = 1
+#                 continue
+#     cur = goal
+#     while cur != start:
+#         Stack.append(cur)
+#         for neighbor in maze.getNeighbors(cur[0],cur[1]):
+#             if visited[cur]==visited[neighbor]+1:
+#                 cur = neighbor
+#                 break
+#     Stack.append(start)
+#     Stack.reverse()            
+                                   
+#     return Stack,totalSteps
+
+
+# def getdis(Objective, Now):
+#     return abs(Objective[0]-Now[0]) * abs(Objective[1]-Now[1])
+# def getdist(Objective, Now):
+#     return abs(Objective[0]-Now[0]) + abs(Objective[1]-Now[1])
