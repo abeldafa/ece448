@@ -14,14 +14,12 @@ within this file -- the unrevised staff files will be used for all other
 files and classes when code is run, so be careful to not modify anything else.
 """
 
-
 # Search should return the path and the number of states explored.
 # The path should be a list of tuples in the form (row, col) that correspond
 # to the positions of the path taken by your search algorithm.
 # Number of states explored should be a number.
 # maze is a Maze object based on the maze from the file specified by input filename
 # searchMethod is the search method specified by --method flag (bfs,dfs,greedy,astar)
-
 def search(maze, searchMethod):
     return {
         "bfs": bfs,
@@ -32,17 +30,58 @@ def search(maze, searchMethod):
 
 
 def bfs(maze):
-    # TODO: Write your code here
-    # return path, num_states_explored
-    print("this is the worst thing ever !")
-    return [], 0
+    start = maze.getStart()
+    goal = maze.getObjectives()[0]
+    visited = set()
+    totalSteps = 0
+    path = []
+    pathDict = {}
+
+    q = []
+    q.append(start)
+    visited.add(start)
+    while True:
+        cur = q.pop(0)
+        totalSteps += 1
+        visited.add(cur)
+        if cur==goal:
+            break
+        for neighbor in maze.getNeighbors(cur[0],cur[1]):
+            if neighbor in visited:
+                continue
+            q.append(neighbor)
+            pathDict[neighbor] = cur
+    
+    temp = goal
+    while temp!=start:
+        path.append(temp)
+        temp = pathDict[temp]
+    path.append(start)
+    path = path.reverse()
+
+    return path,totalSteps    
 
 
 def dfs(maze):
-    # TODO: Write your code here
-    # return path, num_states_explored
-    return [], 0
-
+    
+    start = maze.getStart()
+    goal = maze.getObjectives()[0]
+    visited = set()
+    totalSteps = 0
+    path = []
+    s = []
+    s.append(start)
+    tempPath = []
+    while s:
+        cur = s.pop()
+        totalSteps += 1 
+        if [cur] not in visited:
+            visited.add(cur)
+            neighbors = maze.getNeighbors(cur[0],cur[1])
+            for neighbor in maze.getNeighbors(cur[0],cur[1]):
+                s.append(neighbor)
+    
+    return path,totalSteps   
 
 def greedy(maze):
     # TODO: Write your code here
