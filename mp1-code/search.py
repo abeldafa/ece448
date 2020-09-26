@@ -49,8 +49,10 @@ def bfs(maze):
         for neighbor in maze.getNeighbors(cur[0],cur[1]):
             if neighbor in visited:
                 continue
-            q.append(neighbor)
-            pathDict[neighbor] = cur
+            else:
+                visited.add(neighbor)
+                q.append(neighbor)
+                pathDict[neighbor] = cur
     
     temp = goal
     while temp!=start:
