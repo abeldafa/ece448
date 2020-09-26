@@ -62,25 +62,8 @@ def bfs(maze):
 
 
 def dfs(maze):
-    
-    start = maze.getStart()
-    goal = maze.getObjectives()[0]
-    visited = set()
-    totalSteps = 0
-    path = []
-    s = []
-    s.append(start)
-    tempPath = []
-    while s:
-        cur = s.pop()
-        totalSteps += 1 
-        if [cur] not in visited:
-            visited.add(cur)
-            neighbors = maze.getNeighbors(cur[0],cur[1])
-            for neighbor in maze.getNeighbors(cur[0],cur[1]):
-                s.append(neighbor)
-    
-    return path,totalSteps   
+
+    return [],0
 
 def greedy(maze):
     # TODO: Write your code here
