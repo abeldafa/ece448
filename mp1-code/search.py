@@ -57,8 +57,7 @@ def bfs(maze):
         path.append(temp)
         temp = pathDict[temp]
     path.append(start)
-    path = path.reverse()
-
+    path.reverse()
     return path,totalSteps    
 
 
