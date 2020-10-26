@@ -41,8 +41,12 @@ class ultimateTicTacToe:
         self.blockDict = {}
         self.INF = 100000000
         self.steps = 0
+        self.rounds = 1
         for blockIndex in range(9):
             self.blockDict[blockIndex] = True
+    def setRounds(self,rounds):
+        self.rounds = rounds
+    
     def setStart(self, start):
         self.startBoardIdx=start
     def randomStart(self):
@@ -219,23 +223,23 @@ class ultimateTicTacToe:
         score(float): estimated utility score for maxPlayer or minPlayer
         """
         score=0
-        if isMax:
-            print("off using def strat, stop!")
-            exit(1)
-
-        else:
-            
+        if not isMax:
             if self.checkWinner()==-1:
+                # print("steps:"+self.steps+"I will win!")
                 return -10000
             # if self.oppoWillWin(move) == 1:
             if self.checkWinner() == 1:
-                print("oppo will win")
-                print("total steps",self.steps)
-                return 10000
-            score -= self.checkTwo(isMax)
+                # print("oppo will win")
+                # print("total steps",self.steps)
+                return 9999
+            score -= self.checkTwo(False)
             if score < 0:
                 return score
             score -= self.checkAllCorners(False)
+        else:
+            print("off using def strat, stop!")
+            exit(1)
+
         return score
 
     def checkMovesLeft(self):
@@ -314,8 +318,6 @@ class ultimateTicTacToe:
                 pass        
         
         return None
-
-
     def alphabeta(self, depth, blockIndex,isMax, move, alpha, beta,expandedNode, userEval):
         """
         This function implements alpha-beta algorithm for ultimate tic-tac-toe game.
@@ -331,10 +333,8 @@ class ultimateTicTacToe:
         """
         expandedNode[0] += 1
         if depth >= self.maxDepth-1 or not self.checkMovesLeft():
-            # if isMax: # if new step is def
-            #     return self.evaluateDesigned(isMax,move), move
-            # else:
             return self.evaluatePredifined(isMax), move
+
         availableLocalSpots = self.getAvailableLocalSpots(blockIndex)
         bestValue = -1000000 if isMax else 1000000
         bestMove = []
@@ -342,10 +342,10 @@ class ultimateTicTacToe:
             for spot in availableLocalSpots:
                 self.draw(spot,isMax)
                 tempBlockIndex = spot[0]%3*3 + spot[1]%3;
-                # one problem is that whether we should predict the next step using alphabeta?
                 tempValue,tempMove = self.alphabeta(depth+1,tempBlockIndex,not isMax, spot, alpha, beta,expandedNode, userEval)
-                bestValue = self.getBetterValue(tempValue,bestValue,isMax)
                 bestMove = self.getBetterMove(tempValue,bestValue,isMax,spot,bestMove)
+                bestValue = self.getBetterValue(tempValue,bestValue,isMax)
+
                 self.erase(spot)
                 if isMax:
                     alpha[0] = max(alpha[0],bestValue)
@@ -355,7 +355,6 @@ class ultimateTicTacToe:
                     beta[0] = min(beta[0],bestValue)
                     if beta[0] <= alpha[0]:
                         break
-            return bestValue, bestMove
         else: # global
             availableGlobalSpots = self.getAvailableGlobalSpots(blockIndex)
             for spot in availableGlobalSpots:
@@ -374,9 +373,69 @@ class ultimateTicTacToe:
                     if beta[0] <= alpha[0]:
                         break
 
-            return bestValue, bestMove
+        return bestValue, bestMove
 
-        # return bestValue,bestMove
+    def userAlphabeta(self, depth, blockIndex,isMax, move, alpha, beta,expandedNode, userEval):
+        """
+        This function implements alpha-beta algorithm for ultimate tic-tac-toe game.
+        input args:
+        depth(int): current depth level
+        currBoardIdx(int): current local board index
+        alpha(float): alpha value
+        beta(float): beta value
+        isMax(bool):boolean variable indicates whether it's maxPlayer or minPlayer.
+                     True for maxPlayer, False for minPlayer
+        output:
+        bestValue(float):the bestValue that current player may have
+        """
+        expandedNode[0] += 1
+        if depth >= self.maxDepth-1 or not self.checkMovesLeft():
+            if isMax: # if it is min
+                return self.evaluatePredifined(isMax), move
+            else:
+                return self.evaluateDesigned(isMax,move), move
+
+        availableLocalSpots = self.getAvailableLocalSpots(blockIndex)
+        bestValue = -1000000 if isMax else 1000000
+        bestMove = []
+        if availableLocalSpots: # local 
+            for spot in availableLocalSpots:
+                self.draw(spot,isMax)
+                tempBlockIndex = spot[0]%3*3 + spot[1]%3;
+                # one problem is that whether we should predict the next step using alphabeta?
+                tempValue,tempMove = self.userAlphabeta(depth+1,tempBlockIndex,not isMax, spot, alpha, beta,expandedNode, userEval)
+                bestMove = self.getBetterMove(tempValue,bestValue,isMax,spot,bestMove)
+                bestValue = self.getBetterValue(tempValue,bestValue,isMax)
+
+                self.erase(spot)
+                if isMax:
+                    alpha[0] = max(alpha[0],bestValue)
+                    if beta[0] < alpha[0]:
+                        break
+                else:
+                    beta[0] = min(beta[0],bestValue)
+                    if beta[0] < alpha[0]:
+                        break
+            return bestValue, bestMove
+        else: # global
+            availableGlobalSpots = self.getAvailableGlobalSpots(blockIndex)
+            for spot in availableGlobalSpots:
+                self.draw(spot,isMax)
+                tempBlockIndex = spot[0]%3*3 + spot[1]%3;
+                tempValue,tempMove = self.userAlphabeta(depth+1,tempBlockIndex,not isMax, spot, alpha,beta,expandedNode, userEval)
+                bestValue = self.getBetterValue(tempValue,bestValue,isMax)
+                bestMove = self.getBetterMove(tempValue,bestValue,isMax,spot,bestMove)
+                self.erase(spot)
+                if isMax:
+                    alpha[0] = max(alpha[0],bestValue)
+                    if beta[0] <= alpha[0]:
+                        break
+                else:
+                    beta[0] = min(beta[0],bestValue)
+                    if beta[0] <= alpha[0]:
+                        break
+
+            return bestValue, bestMove
 
     def getBlock(self,cur): # get the index of block where cur is 
         row = cur[0]//3
@@ -481,7 +540,7 @@ class ultimateTicTacToe:
 
     def minimax(self, depth, blockIndex,isMax, move, expandedNode):
         expandedNode[0] += 1
-        if depth >= self.maxDepth-1 or not self.checkMovesLeft():
+        if depth >= self.maxDepth or not self.checkMovesLeft():
             return self.evaluatePredifined(isMax), move
         availableLocalSpots = self.getAvailableLocalSpots(blockIndex)
         bestValue = -1000000 if isMax else 1000000
@@ -567,20 +626,21 @@ class ultimateTicTacToe:
         expandedNodeDefence = [0]
         blockIndex = self.startBoardIdx
         while not ending:
-            self.steps+=1
             tempAlpha =[-self.INF]
             tempBeta = [self.INF]
             if offense:
-                curBestValue, curMove = self.alphabeta(0,blockIndex,True,[],tempAlpha,tempBeta,expandedNodeOffense, False)
+                curBestValue, curMove = self.userAlphabeta(0,blockIndex,True,[],tempAlpha,tempBeta,expandedNodeOffense, False)
             else:
-                curBestValue, curMove = self.alphabeta(0,blockIndex,False,[],tempAlpha,tempBeta,expandedNodeDefence, True)
+                curBestValue, curMove = self.userAlphabeta(0,blockIndex,False,[],tempAlpha,tempBeta,expandedNodeDefence, True)
+
             blockIndex = self.getNextBlock(curMove)
             bestMoves.append(curMove)
+            self.steps += 1
             bestValues.append(curBestValue)
             self.board[curMove[0]][curMove[1]] = 'x' if offense else 'o'
             offense = not offense
             self.updateWin(curMove,curWin)
-            if curWin[0] == 1 or curWin[1] == 1 or not self.checkMovesLeft(): # win 3 blocks
+            if curWin[0] == self.rounds or curWin[1] == self.rounds or not self.checkMovesLeft(): # win 3 blocks
                 ending = True
         if curWin[0]>curWin[1]:
             winner = 1
@@ -588,25 +648,57 @@ class ultimateTicTacToe:
             winner = -1
         else:
             winner = 0
-        # print(curWin)
-        # print("offense expanded nodes is",expandedNodeOffense)
-        # print("defense expanded nodes is",expandedNodeDefence)
         return bestMoves, bestValues, winner
 
 
-    def playGameHuman(self):
-        """
-        This function implements the processes of the game of your own agent vs a human.
-        output:
-        bestMove(list of tuple): list of bestMove coordinates at each step
-        gameBoards(list of 2d lists): list of game board positions at each move
-        winner(int): 1 for maxPlayer is the winner, -1 for minPlayer is the winner, and 0 for tie.
-        """
-        #YOUR CODE HERE
-        bestMove=[]
-        gameBoards=[]
-        winner=0
-        return gameBoards, bestMove, winner
+    def playGameHuman(self,humanFirst):
+        ending = False
+        human = humanFirst
+        curBestValue = 0.0
+        curMove = []
+        winner = 0
+        curWin = [0,0]
+        expandedNodeOffense = [0] 
+        expandedNodeDefence = [0]
+        blockIndex = self.startBoardIdx
+        while not ending:
+            tempAlpha =[-self.INF]
+            tempBeta = [self.INF]
+            if human:
+                while True:
+                    line = input("human choose")
+                    spot = line.split(" ")
+                    x = (int)(spot[1])-1
+                    y = (int)(spot[0])-1
+                    if(self.board[y][x] != '_'):
+                        print("wrong position, choose again!")
+                    elif self.getBlock([y,x]) != blockIndex:
+                        print("wrong block!")
+                    else:
+                        self.board[y][x] = 'x'
+                        blockIndex = self.getNextBlock([y,x])
+                        self.updateWin([y,x],curWin)
+                        self.printGameBoard()
+                        break
+            else:
+                print("computer choose")
+                curBestValue, curMove = self.alphabeta(0,blockIndex,False,[],tempAlpha,tempBeta,expandedNodeDefence, True)
+                blockIndex = self.getNextBlock(curMove)
+                self.board[curMove[0]][curMove[1]] = 'o'
+                self.updateWin(curMove,curWin)
+                self.printGameBoard()
+
+            if curWin[0] == 1 or curWin[1] == 1 or not self.checkMovesLeft(): # win 3 blocks
+                ending = True
+            human = not human
+        if curWin[0]>curWin[1]:
+            winner = 1
+        elif curWin[1] > curWin[0]:
+            winner = -1
+        else:
+            winner = 0
+        return winner
+
 
 def test1():
     print("task1")
@@ -664,30 +756,60 @@ def test2():
     offWin = 0
     defWin = 0
     uttt=ultimateTicTacToe()
-    for i in range(1):
+    print("total round 100")
+    for i in range(100):
+        print("round ",i+1)
         uttt.reInit()
-        # uttt.randomStart()
-        uttt.setStart(6)
-        # start = choice([True,False])
-        start = True
+        uttt.randomStart()
+        start = choice([True,False])
         bestMove, bestValue, winner=uttt.playGameYourAgent(start)
-        print("Max start?", start)
-        uttt.printGameBoard()
         if winner == 1:
-            print("The winner is maxPlayer!!!")
             offWin += 1
+            uttt.printGameBoard()
+
         elif winner == -1:
-            print("The winner is minPlayer!!!")
             defWin += 1
         else:
-            print("Tie. No winner:(")      
+            pass     
     print("offWin is ",offWin)
     print("defWin is ",defWin)
 
+def test3():
+    uttt=ultimateTicTacToe()
+    uttt.reInit()
+    uttt.randomStart()
+    # start = choice([True,False])
+    start = False
+    winner=uttt.playGameHuman(start)
+    print("Max start?", start)
+    if winner == 1:
+        print("The winner is human!!!")
+    elif winner == -1:
+        print("The winner is minPlayer!!!")
+    else:
+        print("Tie. No winner:(") 
+
+def test4():
+    uttt=ultimateTicTacToe()
+    uttt.setRounds(3)
+    uttt.reInit()
+    uttt.randomStart()
+    start = choice([True,False])
+    bestMove, bestValue, winner=uttt.playGameYourAgent(start)
+    print("Max start?", start)
+    uttt.printGameBoard()
+    if winner == 1:
+        print("off wins 3 rounds")
+    elif winner == -1:
+        print("def wins 3 rounds")
+    else:
+        print("die!")
+
 if __name__=="__main__":
-    test1()
-    # print("Part2")
+    # test1()
     # test2()
+    test3()
+    # test4()
 
 
 
